@@ -100,6 +100,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Negin Babaiha, Elizaveta Popova**
 - Email:(negin.babaiha@scai.fraunhofer.de, elizaveta.popova@uni-bonn.de)
 
-## Acknowledgments
 
-Special thanks to OpenAI for providing access to GPT-4V and GPT-4o models, which were instrumental in this research.
