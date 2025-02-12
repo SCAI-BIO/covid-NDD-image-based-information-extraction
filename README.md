@@ -91,10 +91,6 @@ Our workflow consists of several key stages:
 5. **Knowledge Graph Construction**: Building structured representations of biomedical relationships
 
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Contact
 
 - **Negin Babaiha, Elizaveta Popova**
