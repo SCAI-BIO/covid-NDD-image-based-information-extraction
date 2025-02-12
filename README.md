@@ -87,35 +87,9 @@ Our workflow consists of several key stages:
    - First run: 626 relevant URLs
    - Second run: 567 refined URLs
    - Manual verification: 289 final images
-4. **Triple Extraction**: Using GPT-4V and GPT-4o for semantic relationship extraction
+4. **Triple Extraction**: Using GPT-4o for semantic relationship extraction
 5. **Knowledge Graph Construction**: Building structured representations of biomedical relationships
 
-## Results
-
-The project achieved the following metrics:
-- Accuracy: 0.9
-- Precision: 0.48
-- Recall: 0.96
-
-## Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a new branch for your feature
-3. Submit a pull request with a clear description of your changes
-
-## Citation
-
-If you use this work in your research, please cite:
-
-```bibtex
-@article{babaiha2024image,
-  title={Image-based Information Extraction using LLMs for Biomedical Research},
-  author={Babaiha, Negin and et al.},
-  year={2024}
-}
-```
 
 ## License
 
