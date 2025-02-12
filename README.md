@@ -1,7 +1,7 @@
 # Image-based Information Extraction using LLMs for Biomedical Research
 
 ## Overview
-This project develops a novel methodology for extracting structured knowledge from biomedical images using Large Language Models (LLMs). We focus specifically on understanding the relationship between COVID-19 and neurodegeneration through analysis of scientific figures and graphical abstracts. The project leverages GPT-4V and GPT-4o for image analysis and semantic triple extraction, creating a comprehensive knowledge graph of biomedical relationships.
+This project develops a novel methodology for extracting structured knowledge from biomedical images using Large Language Models (LLMs). We focus specifically on understanding the relationship between COVID-19 and neurodegeneration through analysis of scientific figures and graphical abstracts. The project leverages GPT-4o for image analysis and semantic triple extraction, creating a comprehensive knowledge graph of biomedical relationships.
 
 ![Workflow](workflow.svg)
 
