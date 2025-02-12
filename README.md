@@ -123,8 +123,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-- **Negin Babaiha**
-- GitHub: [@NeginBabaiha](https://github.com/NeginBabaiha)
+- **Negin Babaiha, Elizaveta Popova**
+- Email:(negin.babaiha@scai.fraunhofer.de, elizaveta.popova@uni-bonn.de)
 
 ## Acknowledgments
 
