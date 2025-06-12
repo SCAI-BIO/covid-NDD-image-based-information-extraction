@@ -1,0 +1,7 @@
+# Ignore configuration files with sensitive information
+config/config.py
+.venv/
+# Ignore MeSH descriptor file
+data/MeSh_data/desc2025.xml
+__pycache__/
+

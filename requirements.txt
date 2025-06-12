@@ -1,0 +1,18 @@
+# Core dependencies
+pandas
+numpy
+torch
+openai
+sentence-transformers
+openpyxl
+requests
+selenium
+imagehash
+matplotlib
+
+# Optional tools for development, testing, and exploration
+jupyter
+notebook
+ipykernel
+ipywidgets
+tqdm
