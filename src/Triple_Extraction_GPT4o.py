@@ -31,7 +31,7 @@ Requirements:
     - Internet connection and OpenAI API access.
 
 Usage:
-    python src/Triple_Extraction_GPT4o.py --input data/Relevant_URLs_only_GPT_4o.xlsx --output_dir ./triples_output --api_key YOUR_API_KEY
+    python src/Triple_Extraction_GPT4o.py --input data/URL_relevance_analysis/Final_Relevant_URLs.xlsx --output_dir ./triples_output --api_key YOUR_API_KEY
 """
 
 from openai import OpenAI
@@ -193,9 +193,3 @@ if __name__ == "__main__":
 
     triples_extraction_from_urls(args.input, args.output_dir, args.api_key)
 
-
-# === Example usage ===
-# python src/Triple_Extraction_GPT4o.py --input data/Final_Relevant_URLs.xlsx --output_dir ./data/triples_output --api_key YOUR_API_KEY
-# or, using environment variable:
-# export OPENAI_API_KEY=sk-...
-# python src/Triple_Extraction_GPT4o.py --input data/Final_Relevant_URLs.xlsx

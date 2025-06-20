@@ -56,14 +56,25 @@ This project presents a computational framework to identify mechanistic connecti
   - Systemic Cross-Organ Effects
 - Fallback: GPT-4o assigns categories for ambiguous cases
 
+### Step 5: Graph-Based Integration in Neo4j
+- Biomedical triples from both CBM and GPT sources are uploaded into a Neo4j graph database
+- Each entity (Subject/Object) is semantically classified via lexical patterns and ontology APIs (e.g., HGNC, MESH, GO, DOID)
+- Relationships retain associated metadata, including image source, mechanism, and annotation source
+- Nodes are labeled by entity type (e.g., Disease, Protein, Biological_Process) and normalized for ontology compatibility
+- Cypher-based MERGE statements ensure graph consistency without duplication
+- Output: Queryable biomedical knowledge graph accessible via Neo4j Desktop or Bolt endpoint
+
 ---
 
 ## Repository Structure
 
 ```
-SCAI_CODE/
+SCAI-BIO/covid-NDD-image-based-information-extraction/
 │
 ├── data/
+│   ├── CBM_data/                        ← Images and data for CBM manual curation
+│   ├── enrichment_data/                 ← URL collection using Google Image Search, URL pull cleaned
+│   ├── figures_output/                  ← Figures obtained by scripts
 │   ├── gold_standard_comparison/        ← Curated and predicted triples
 │   ├── images_CBM/                      ← Images used for CBM manual triple extraction
 │   ├── MeSh_data/                       ← MeSH XML & category/synonym outputs
@@ -80,7 +91,8 @@ SCAI_CODE/
 │   ├── GPT4o_uncategorized_handling.py
 │   ├── Image_Enrichment_Analysis.py
 │   ├── URLs_Relevance_Check.py
-│   └── Hyperparameters_and_Prompt_Assessment.py
+│   ├── Hyperparameters_and_Prompt_Assessment.py
+│   └── neo4j_upload.py
 ```
 
 ---
@@ -92,7 +104,7 @@ SCAI_CODE/
 | **TRIPLE EXTRACTION** |
 | `Triples_Final_All_Relevant.csv/xlsx` | All semantic triples extracted from the full image pool using GPT-4o |
 | `Triples_Final_comparison_with_CBM.csv/xlsx` | GPT triples for subset of images annotated by CBM |
-| `Triples_GPT_for_comparison.xlsx` | GPT triples for CBM subset, with image-level mapping |
+| `Triples_GPT_for_comparison.xlsx/csv` | GPT triples for CBM subset, with image-level mapping |
 | `Triples_GPT_for_comparison_SubjObj_Categorized.xlsx/csv` | Same triples, with MeSH-based subject/object category labels |
 | **GOLD STANDARD (CBM MANUAL ANNOTATION)** |
 | `Triples_CBM_Gold_Standard.xlsx` | Manually curated CBM triples |
@@ -104,9 +116,9 @@ SCAI_CODE/
 | `mesh_category_terms.json` | MeSH category → keyword dictionary |
 | `mesh_triples_synonyms.json` | Triple term → normalized MeSH descriptor & synonyms |
 | **EVALUATION & RELEVANCE** |
-| `Comparison_GPT_Manual_Relevance.xlsx` | Manual evaluation of GPT-extracted triples |
-| `Relevant_URLs_only_GPT_4o.xlsx` | Final image set considered relevant by GPT-4o |
-| `Supplementary_material_Table_1.xlsx` | Results from GPT prompt & hyperparameter tuning |
+| `Comparison_GPT_Manual_Relevance.xlsx` | Manual evaluation of GPT-extracted captions |
+| `Relevant_URLs_only_GPT_4o.xlsx` | Final image set deemed relevant via GPT-4o |
+| `Supplementary_material_S3_Table.xlsx` | Results from GPT prompt & hyperparameter tuning |
 
 ---
 
@@ -114,13 +126,13 @@ SCAI_CODE/
 
 ```bash
 # Step 1: Extract biomedical image links
-python src/Image_Enrichment_Analysis.py   --query "Covid-19 and Neurodegeneration"   --main 100 --similar 100 --output_raw Enrichment_Search_URLs   --output_clean Enrichment_Cleaned --outdir ./data
+python src/Image_Enrichment_Analysis.py   --query "Covid-19 and Neurodegeneration"   --main 100 --similar 100 --output_raw Enrichment_Search_URLs   --output_clean Enrichment_Cleaned --outdir ./data/enrichment_data
 
 # Step 2: Relevance check (GPT-based)
-python src/URLs_Relevance_Check.py --input data/Enrichment_Search_URLs.xlsx --api_key YOUR_API_KEY
+python src/URLs_Relevance_Check.py --input data/enrichment_data/Enrichment_Search_URLs.xlsx --api_key YOUR_API_KEY
 
 # Step 3: Extract semantic triples
-python python src/Triple_Extraction_GPT4o.py --input data/Final_Relevant_URLs.xlsx --output_dir ./data/triples_output --api_key YOUR_API_KEY
+python python src/Triple_Extraction_GPT4o.py --input data/URL_relevance_analysis/Final_Relevant_URLs.xlsx --output_dir ./data/triples_output --api_key YOUR_API_KEY
 
 # Step 4: Compare to gold standard using BioBERT
 python src/Gold_Standard_Comparison_BioBERT.py   --gold data/gold_standard_comparison/Triples_CBM_Gold_Standard.xlsx   --eval data/gold_standard_comparison/Triples_GPT_for_comparison.xlsx
@@ -130,6 +142,9 @@ python src/Triples_Categorization.py   --input triples_output/Triples_Final_All_
 
 # Step 6: Resolve uncategorized entries with GPT-4o
 python src/GPT4o_uncategorized_handling.py --input data/triples_output/Triples_Final_All_Relevant_Categorized.xlsx --output data/triples_output/Triples_Final_All_Relevant_Categorized_GPT4o --api_key YOUR_API_KEY
+
+# Step 7: Upload triples to Neo4j graph database
+python src/neo4j_upload.py --cbm data/gold_standard_comparison/Triples_CBM_Gold_Standard_cleaned.csv --gpt data/gold_standard_comparison/Triples_GPT_for_comparison.csv
 ```
 
 ---
@@ -143,6 +158,25 @@ This project uses:
 
 > [Download desc2025.xml](https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc2025.xml)  
 Place in: `/data/MeSh_data/desc2025.xml`
+
+---
+
+## Neo4j Integration
+
+The script `neo4j_upload.py` uploads all extracted and/or curated semantic triples into a local Neo4j graph database using the **Bolt** protocol.
+
+- Each node (Subject/Object) is labeled based on ontology categories (e.g., Gene, Disease, Biological_Process)
+- Relationships retain metadata (image URL, pathophysiological process, source)
+- External APIs (HGNC, MeSH, GO, DOID, ChEMBL) are used to classify and normalize terms
+
+Neo4j Setup:
+
+- Install Neo4j Desktop
+- Create and start a local database (default port: bolt://localhost:7687)
+- Username: neo4j
+- Provide the password when prompted
+
+You can visualize the resulting biomedical knowledge graph using Neo4j's Explore interface.
 
 ---
 
@@ -206,8 +240,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Funding
 
-This research was supported by the 
-Grant ID: 
+This research was supported by the Bonn-Aachen International Center for Information Technology (b-it) foundation, Bonn, Germany, and Fraunhofer Institute for Algorithms and Scientific Computing (SCAI). Additional financial support was provided through the COMMUTE project, which receives funding from the European Union under Grant Agreement No. 101136957.
 
 ---
 

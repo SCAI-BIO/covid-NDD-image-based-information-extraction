@@ -9,6 +9,7 @@ requests
 selenium
 imagehash
 matplotlib
+neo4j>=5.0
 
 # Optional tools for development, testing, and exploration
 jupyter

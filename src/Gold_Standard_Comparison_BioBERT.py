@@ -253,7 +253,7 @@ def compare_triples_biobert(gold_triples, eval_triples, image_id, sim_threshold=
             sub_sim_best >= sim_threshold and
             obj_sim_best >= sim_threshold and
             lex_sub_sim >= lex_thr and
-            lex_obj_sim >= lex_thr  # <<<<< CHANGED: now BOTH subject and object must pass lexical threshold
+            lex_obj_sim >= lex_thr  # Both subject and object must pass lexical threshold
         )
 
         match_str = "✅ MATCH" if is_match else "❌ NO MATCH"
@@ -329,19 +329,20 @@ def evaluate_all_images(df_gold, df_eval):
         print("  No matched triples.")
 
     # Plot
-    bins = [0, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0]
-    plt.hist(all_similarities, bins=bins, edgecolor='black')
-    plt.title("Similarity Distribution of Predicted Triples")
-    plt.xlabel("Cosine Similarity")
-    plt.ylabel("Frequency")
-    plt.grid(True)
+    plt.figure(figsize=(6, 4), dpi=600)
+    plt.hist(all_similarities, bins=[0, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0], edgecolor='black', color='#4A9BB5')
+
+    plt.xlabel("Cosine Similarity", fontsize=10, fontname="Arial")
+    plt.ylabel("Frequency", fontsize=10, fontname="Arial")
+    plt.xticks(fontsize=8, fontname="Arial")
+    plt.yticks(fontsize=8, fontname="Arial")
+    plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+
     plt.tight_layout()
-    plt.show()
+    plt.savefig("data/figures_output/Fig7.tiff", format='tiff', dpi=600)
+    plt.close()
 
 # === Run ===
 if __name__ == "__main__":
     evaluate_all_images(df_gold, df_eval)
-
-# Example usage:
-# python src/Gold_Standard_Comparison_BioBERT.py --gold data/gold_standard_comparison/Triples_CBM_Gold_Standard.xlsx --eval data/gold_standard_comparison/Triples_GPT_for_comparison.xlsx
 

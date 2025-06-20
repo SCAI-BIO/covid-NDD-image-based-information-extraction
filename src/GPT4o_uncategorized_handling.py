@@ -135,6 +135,3 @@ if __name__ == "__main__":
         raise ValueError("No API key provided. Use --api_key or set the OPENAI_API_KEY environment variable.")
 
     categorize_uncategorized(args.input, args.output, args.api_key)
-
-# === Example usage ===
-# python src/GPT4o_uncategorized_handling.py --input data/triples_output/Triples_Final_All_Relevant_Categorized.xlsx --output data/triples_output/Triples_Final_All_Relevant_Categorized_GPT4o --api_key YOUR_API_KEY

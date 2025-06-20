@@ -46,7 +46,7 @@ Usage:
         --similar 3 \
         --output_raw Enrichment_Search_URLs_0 \
         --output_clean Enrichment_Cleaned_0 \
-        --outdir ./data
+        --outdir ./data/enrichment_data
 
 Warning:
     When the Chrome browser window opens during scraping, you may need to manually accept cookies or close pop-ups
@@ -476,7 +476,7 @@ if __name__ == "__main__":
     parser.add_argument("--similar", type=int, default=100, help="Number of similar/faceted images to collect (default: 100)")
     parser.add_argument("--output_raw", required=True, help="Filename (without extension) for raw image output")
     parser.add_argument("--output_clean", required=True, help="Filename (without extension) for cleaned de-duplicated output")
-    parser.add_argument("--outdir", default="./data", help="Output directory (default: ./data)")
+    parser.add_argument("--outdir", default="./data/enrichment_data", help="Output directory (default: ./data/enrichment_data)")
     
     args = parser.parse_args()
 
@@ -492,7 +492,3 @@ if __name__ == "__main__":
     # Run cleaning and save cleaned file
     dataset_purification(data_table, download_path=args.outdir, output_clean_filename=args.output_clean)
 
-
-
-# === Example usage ===
-# python src/Image_Enrichment_Analysis.py --query "Covid-19 and Neurodegeneration" --main 5 --similar 3 --output_raw Enrichment_Search_URLs --output_clean Enrichment_Cleaned --outdir ./data

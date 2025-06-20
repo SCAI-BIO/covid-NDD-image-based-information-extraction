@@ -32,7 +32,7 @@ Metric:
           CSS = 0.6 × Average Cosine Similarity + 0.4 × F1-Score
     
 Run from project root:
-    >>> python src/Hyperparameters_and_Prompt_Assessment.py --input data/Supplementary_material_Table_1.xlsx
+    >>> python src/Hyperparameters_and_Prompt_Assessment.py --input data/Supplementary_material_S3_Table.xlsx
 
 Dependencies:
     - sentence-transformers
@@ -145,6 +145,3 @@ if __name__ == "__main__":
         scores.append(css)
 
     plot_hyperparameters(scores)
-
-# === Example usage ===
-# python src/Hyperparameters_and_Prompt_Assessment.py --input data/Supplementary_material_Table_1.xlsx
