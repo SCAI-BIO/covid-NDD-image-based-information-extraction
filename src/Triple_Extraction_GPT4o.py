@@ -31,25 +31,33 @@ Requirements:
     - Internet connection and OpenAI API access.
 
 Usage:
-    python src/Triple_Extraction_GPT4o.py --input data/Relevant_URLs_only_GPT_4o.xlsx --output_dir ./triples_output --api_key YOUR_API_KEY
+    python src/Triple_Extraction_GPT4o.py --input data/URL_relevance_analysis/Final_Relevant_URLs.xlsx --output data/triples_output/Triples_Final_All_Relevant --api_key YOUR_API_KEY
 """
 
 from openai import OpenAI
 import pandas as pd
 import os
+import requests
+import time
 
 def gpt_authenticate(API_key):
-    """
-    Authenticates with the OpenAI GPT API using the provided API key.
-
-    Args:
-        API_key (str): OpenAI API key.
-
-    Returns:
-        OpenAI: Authenticated API client.
-    """
     return OpenAI(api_key=API_key)
 
+def is_url_accessible(url, timeout=10):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
+    try:
+        head = requests.head(url, headers=headers, timeout=timeout)
+        if head.status_code == 200 and 'image' in head.headers.get("Content-Type", ""):
+            return True
+        # Fallback to GET
+        get = requests.get(url, headers=headers, stream=True, timeout=timeout)
+        return get.status_code == 200 and 'image' in get.headers.get("Content-Type", "")
+    except requests.RequestException as e:
+        print(f"⚠️ URL access error for {url}: {e}")
+        return False
 
 def gpt_extract(client, url):
     """
@@ -64,6 +72,7 @@ def gpt_extract(client, url):
     """
     response = client.chat.completions.create(
     model="gpt-4o",
+
 ## Prompt_3
     # messages=[
     #   {
@@ -124,78 +133,74 @@ def gpt_extract(client, url):
       }
     ],
     max_tokens=2000,
-    temperature=0.0,    #parameters    
-    top_p=0.0   #parameters
+    temperature=0.25,    #parameters    
+    top_p=0.25   #parameters
   )
     content = response.choices[0].message.content
     return content
 
-def triples_extraction_from_urls(input_path, output_dir, API_key):
-    """
-    Main function to process image URLs, extract semantic triples using GPT, and save results.
-
-    Args:
-        input_path (str): Path to the input Excel file with image URLs.
-        output_dir (str): Directory where the output files will be saved.
-        API_key (str): OpenAI API key.
-    """
+def triples_extraction_from_urls(input_path, output_path_base, API_key):
     client = gpt_authenticate(API_key)
     df = pd.read_excel(input_path)
 
     parsed_data = []
 
-    for idx, row in df.iterrows(): 
-        try:
-            url = row["URL"]
-            content = gpt_extract(client, url)
-            print(url, content)
+    for idx, row in df.iterrows():
+        image_number = row["Image_number"]
+        original_url = row["URL"]
+        github_url = row["GitHub_URL"]
 
-            # Parse mechanisms
+        if not is_url_accessible(github_url):
+            print(f"❌ Skipping inaccessible URL: {github_url}")
+            continue
+
+        try:
+            time.sleep(1.5)
+            content = gpt_extract(client, github_url)
+            print(f"\n{github_url}\n{content}")
+
             mechanisms = content.strip().split('Pathophysiological Process: ')
             for mechanism_block in mechanisms[1:]:
                 lines = mechanism_block.strip().split('\n')
                 mechanism_name = lines[0].strip()
-                triples = lines[2:]  # skip the "Triples:" line
+                triples = lines[2:]  # Skip "Triples:" line
 
                 for triple in triples:
                     subject, predicate, obj = triple.strip().split('|')
-                    parsed_data.append([url, mechanism_name, subject, predicate, obj])
+                    parsed_data.append([image_number, original_url, github_url,
+                                        mechanism_name, subject, predicate, obj])
         except Exception as e:
-            print(f"Error processing {url}: {e}")
+            print(f"⚠️ Error processing {github_url}: {e}")
             continue
 
-    parsed_df = pd.DataFrame(parsed_data, columns=['URL', 'Pathophysiological Process', 'Subject', 'Predicate', 'Object'])
+    parsed_df = pd.DataFrame(parsed_data, columns=[
+        'Image_number', 'URL', 'GitHub_URL',
+        'Pathophysiological Process', 'Subject', 'Predicate', 'Object'
+    ])
 
-    # Ensure output directory exists
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(output_path_base), exist_ok=True)
+    parsed_df.to_csv(f"{output_path_base}.csv", index=False)
+    parsed_df.to_excel(f"{output_path_base}.xlsx", index=False)
 
-    csv_path = os.path.join(output_dir, "Triples_Final_All_Relevant.csv")
-    xlsx_path = os.path.join(output_dir, "Triples_Final_All_Relevant.xlsx")
-
-    parsed_df.to_csv(csv_path, index=False)
-    parsed_df.to_excel(xlsx_path, index=False)
-
-    print(f"Triples saved to:\n- {csv_path}\n- {xlsx_path}")
+    print(f"✅ Triples saved to:\n- {output_path_base}.csv\n- {output_path_base}.xlsx")
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Extract semantic triples from images using OpenAI GPT-4o.")
-    parser.add_argument("--input", required=True, help="Path to Excel file with image URLs (column name: 'URL').")
-    parser.add_argument("--output_dir", default="./data/triples_output", help="Directory to save output files.")
-    parser.add_argument("--api_key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key (can also be set via OPENAI_API_KEY env variable).")
+    parser = argparse.ArgumentParser(description="Extract semantic triples from biomedical images using OpenAI GPT-4o.")
+    parser.add_argument("--input", required=True, help="Path to Excel file with image URLs (columns: 'Image_number', 'URL', 'GitHub_URL').")
+    parser.add_argument("--output", required=True, help="Output file base path without extension.")
+    parser.add_argument("--api_key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key.")
 
     args = parser.parse_args()
 
     if not args.api_key:
         raise ValueError("No API key provided. Use --api_key or set the OPENAI_API_KEY environment variable.")
 
-    triples_extraction_from_urls(args.input, args.output_dir, args.api_key)
+    triples_extraction_from_urls(args.input, args.output, args.api_key)
 
-
-# === Example usage ===
-# python src/Triple_Extraction_GPT4o.py --input data/Final_Relevant_URLs.xlsx --output_dir ./data/triples_output --api_key YOUR_API_KEY
-# or, using environment variable:
-# export OPENAI_API_KEY=sk-...
-# python src/Triple_Extraction_GPT4o.py --input data/Final_Relevant_URLs.xlsx
+# python src/Triple_Extraction_GPT4o.py --input data/prompt_engineering/cbm_files/CBM_subset_50_URLs.xlsx --output data/prompt_engineering/gpt_files/GPT_subset_triples_prompt1_param00 --api_key YOUR_API_KEY
+# python src/Triple_Extraction_GPT4o.py --input data/prompt_engineering/cbm_files/CBM_subset_50_URLs.xlsx --output data/prompt_engineering/gpt_files/GPT_subset_triples_prompt2_param00 --api_key YOUR_API_KEY
+# python src/Triple_Extraction_GPT4o.py --input data/prompt_engineering/cbm_files/CBM_subset_50_URLs.xlsx --output data/prompt_engineering/gpt_files/GPT_subset_triples_prompt3_param00 --api_key YOUR_API_KEY
+# python src/Triple_Extraction_GPT4o.py --input data/prompt_engineering/cbm_files/CBM_subset_50_URLs.xlsx --output data/prompt_engineering/gpt_files/GPT_subset_triples_prompt1_param0_25 --api_key YOUR_API_KEY

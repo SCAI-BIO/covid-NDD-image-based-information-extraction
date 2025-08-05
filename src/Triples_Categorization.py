@@ -34,6 +34,14 @@ Requirements:
     - pandas
     - torch
     - openpyxl (for Excel export)
+
+Usage:
+    Run PP-based classification:
+        python src/Triples_Categorization.py --input data/triples_output/Triples_Final_All_Relevant.csv --output data/triples_output/Triples_Final_All_Relevant_Categorized --mode pp
+
+    Run Subject+Object-based classification:
+        python src/Triples_Categorization.py --input data/gold_standard_comparison/Triples_CBM_Gold_Standard.xlsx --output data/gold_standard_comparison/Triples_CBM_Gold_Standard_SubjObj_Categorized --mode subjobj   
+        python src/Triples_Categorization.py --input data/gold_standard_comparison/Triples_GPT_for_comparison.xlsx --output data/gold_standard_comparison/Triples_GPT_for_comparison_SubjObj_Categorized --mode subjobj
 """
 
 import pandas as pd
@@ -131,11 +139,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_classification(args.input, args.mesh, args.output, args.mode)
-
-# === Example usage ===
-# Run PP-based classification:
-# python src/Triples_Categorization.py --input data/triples_output/Triples_Final_All_Relevant.csv --output data/triples_output/Triples_Final_All_Relevant_Categorized --mode pp
-#
-# Run Subject+Object-based classification:
-# python src/Triples_Categorization.py --input data/gold_standard_comparison/Triples_CBM_Gold_Standard.xlsx --output data/gold_standard_comparison/Triples_CBM_Gold_Standard_SubjObj_Categorized --mode subjobj   
-# python src/Triples_Categorization.py --input data/gold_standard_comparison/Triples_GPT_for_comparison.xlsx --output data/gold_standard_comparison/Triples_GPT_for_comparison_SubjObj_Categorized --mode subjobj

@@ -30,11 +30,11 @@ Requirements:
 
 Usage:
     Provide input and output arguments via CLI:
-    python src/URLs_Relevance_Check.py --input data/Enrichment_Search_URLs_0.xlsx --api_key YOUR_API_KEY
+    python src/URLs_Relevance_Check.py --input data/enrichment_data/Enrichment_Search_URLs.xlsx --api_key YOUR_API_KEY
 
     Or (preferred) store your key as an environment variable:
     export OPENAI_API_KEY=sk-...
-    python src/URLs_Relevance_Check.py --input data/Enrichment_Search_URLs_0.xlsx
+    python src/URLs_Relevance_Check.py --input data/enrichment_data/Enrichment_Search_URLs.xlsx
 """
 
 import os
@@ -149,8 +149,7 @@ def gpt_extract(client, url):
       {
         "role": "user",
         "content": [
-          {"type": "text", "text": '''Image URL is given. Analyze this image and assign relevance to it: "Not" for irrelevant images and "Yes" for relevant ones.
-                                      Follow this classification:
+          {"type": "text", "text": '''Image URL is given. Analyze this image and assign relevance to it: "Yes" for relevant images, "No" for irrelevant images, and "Uncertain" if the relevance cannot be assessed. Follow this classification:
                                       Relevant:
                                       Images which:
                                       Сlearly demonstrate relationship between Covid-19 and neurodegeneration (any neurological impacts).
@@ -164,7 +163,10 @@ def gpt_extract(client, url):
                                       Images where correct interpretation of the data is impossible.
                                       Images which display insights into Covid-19 OR Neurodegeneration, if one is present and the other is missing.
                                       
-                                      Your answer should contain only a final decision in the following format: No/Yes (without dots)
+                                      Uncertain:
+                                      The relevance of the image cannot be confidently determined based on the visual content.
+                                      
+                                      Your answer should contain only a final decision in the following format: No/Yes/Uncertain (without dots)
                                       Don't write anything else!'''},
            {
             "type": "image_url",
@@ -280,12 +282,4 @@ if __name__ == "__main__":
     API_key = args.api_key
     relevance_check_main(args.input, args.output_dir, args.api_key)
 
-
-# === Example usage ===
-# CLI usage with direct API key:
-# python src/URLs_Relevance_Check.py --input data/Enrichment_Search_URLs.xlsx --api_key YOUR_API_KEY
-#
-# CLI usage with environment variable:
-# export OPENAI_API_KEY=sk-...
-# python src/URLs_Relevance_Check.py --input data/Enrichment_Search_URLs.xlsx
 
