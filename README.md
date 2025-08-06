@@ -1,7 +1,7 @@
 
-# Identifying Mechanistic Links Between COVID-19 and Neurodegenerative Diseases
+# Leveraging Multimodal Large Language Models to Extract Mechanistic Insights from Biomedical Visuals: A Case Study on COVID-19 and Neurodegenerative Diseases
 
-**Authors**: Elizaveta Popova, Negin Sadat Babaiha  
+**Authors**: Elizaveta Popova, Marc Jacobs, Martin Hofmann-Apitius, Negin Sadat Babaiha  
 **Institutions**: University of Bonn, Fraunhofer SCAI  
 **Contact**: elizaveta.popova@uni-bonn.de, negin.babaiha@scai.fraunhofer.de  
 
