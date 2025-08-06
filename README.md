@@ -19,12 +19,12 @@ This project presents a computational framework to identify mechanistic connecti
 ## Project Overview
 
 ### Goals
-- Extract biological mechanisms from graphical abstracts
+- Extract biological mechanisms from graphical abstracts and biomedical visuals
 - Compare GPT-generated triples to a manually curated gold standard
 - Classify processes into domain-relevant pathophysiological categories
 
 ### Key Techniques
-- GPT-4o (multimodal) for image-to-text triple extraction
+- GPT-4o model for image-to-text triple extraction
 - BioBERT for semantic embedding and similarity
 - Sentence-BERT + MeSH ontology for mechanistic classification
 
@@ -35,12 +35,12 @@ This project presents a computational framework to identify mechanistic connecti
 ### Step 1: Image Extraction and Filtering
 - Automated Google Images scraping
 - Relevance filtering via GPT-4o
-- Output: `Relevant_URLs_only_GPT_4o.xlsx`
+- Output: `data/URL_relevance_analysis/Relevant_URLs_only_GPT_4o.xlsx`
 
 ### Step 2: Triple Extraction from Biomedical Images
 - GPT-4o queried with standardized prompts
 - Output format: subject | predicate | object
-- Output: `Triples_Final_All_Relevant.csv`
+- Output: `data/triples_output/Triples_Final_All_Relevant.csv`
 
 ### Step 3: Triple Evaluation (Gold Standard Comparison)
 - Uses BioBERT embeddings to compare GPT and CBM triples
@@ -83,6 +83,12 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 │   ├── MeSh_data/                       ← MeSH XML & category/synonym outputs
 │   ├── URL_relevance_analysis/          ← URL relevance check results (GPT-4o and manual)
 │   └── triples_output/                  ← Extracted and categorized triples
+│   └── prompt_engineering/              ← Prompt engineering resources
+│       ├── prompt_templates/            ← Standardized reusable prompts
+│       │   ├── triple_extraction/        ← Prompts for GPT-based triple extraction
+│       │   ├── categorization/           ← Prompts for triple categorization
+
+
 │
 ├── notebooks/
 │   └── MeSH_Keyword_Extraction.ipynb    ← Keyword extraction & entity normalization
