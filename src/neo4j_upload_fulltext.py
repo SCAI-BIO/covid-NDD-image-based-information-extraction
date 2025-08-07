@@ -1,4 +1,4 @@
-#%% Upload hypothesis space (manually filtered by me) in csv format to Neo4j AuraDB
+# Upload hypothesis space  in csv format to Neo4j AuraDB
 # After this RUN GPT-CORRECT .. script to correct labels!!
 from __future__ import annotations
 from operator import delitem
