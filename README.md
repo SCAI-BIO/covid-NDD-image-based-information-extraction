@@ -10,7 +10,7 @@
 **Contact**: elizaveta.popova@uni-bonn.de, negin.babaiha@scai.fraunhofer.de  
 
 ---
-![Workflow Diagram](data/workflow.png)
+![Workflow Diagram](images/workflow.png)
 ---
 ## Abstract
 
