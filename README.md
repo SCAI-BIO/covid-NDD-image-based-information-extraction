@@ -358,12 +358,6 @@ export OPENAI_API_KEY=sk-...
 
 ---
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
 ## Contact
 
 - **Elizaveta Popova**  
@@ -373,10 +367,6 @@ This project is licensed under the [MIT License](LICENSE).
 - **Negin Sadat Babaiha**  
   Fraunhofer SCAI  
   negin.babaiha@scai.fraunhofer.de  
-
----
-
-## Funding
 
 ---
 
