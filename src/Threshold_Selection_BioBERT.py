@@ -9,7 +9,8 @@ Date: 30/07/2025
 Description:
     Evaluates cosine similarity thresholds to align GPT-predicted full semantic triples
     (subject–predicate–object) with CBM gold standard using BioBERT. Full triples are compared
-    as single normalized text strings.
+    as single normalized text strings, and global best-match selection is performed using
+    the Hungarian algorithm for optimal assignment.
 
 Usage:
     python src/Threshold_Selection_BioBERT.py --gold <gold_file_path> --eval <eval_file_path>
@@ -22,6 +23,8 @@ import torch
 import argparse
 import re
 from transformers import AutoTokenizer, AutoModel
+from scipy.optimize import linear_sum_assignment
+import os
 
 # === Load BioBERT ===
 MODEL_NAME = "dmis-lab/biobert-base-cased-v1.1"
@@ -61,46 +64,65 @@ def group_full_triples(df):
 
 def compare_full_triples(gold_dict, eval_dict, threshold):
     TP = FP = FN = 0
+    comparison_records = []
 
     for image_id in sorted(set(gold_dict) & set(eval_dict), key=lambda x: int(x.split('_')[-1])):
-        gold_triples = gold_dict[image_id]
-        eval_triples = eval_dict[image_id]
-        matched_gold = set()
-
         print(f"\n--- Comparing triples for image: {image_id} ---")
 
-        for idx_pred, pred in enumerate(eval_triples):
-            emb_pred = get_embedding(pred)
-            best_score = 0
-            best_idx = None
-            best_gold = ""
+        gold_triples = gold_dict[image_id]
+        eval_triples = eval_dict[image_id]
 
-            for idx_gold, gold in enumerate(gold_triples):
-                if idx_gold in matched_gold:
-                    continue
-                emb_gold = get_embedding(gold)
-                sim = cosine_similarity(emb_pred, emb_gold)
-                if sim > best_score:
-                    best_score = sim
-                    best_idx = idx_gold
-                    best_gold = gold
+        emb_gold = [get_embedding(t) for t in gold_triples]
+        emb_eval = [get_embedding(t) for t in eval_triples]
 
-            match = best_score >= threshold
-            print(f"\nTriple {idx_pred + 1}:")
-            print(f"GPT:   {pred}")
-            print(f"CBM:   {best_gold}")
-            print(f"Sim:   {best_score:.3f} → {'✅ MATCH' if match else '❌ NO MATCH'}")
+        sim_matrix = np.zeros((len(eval_triples), len(gold_triples)))
 
-            if match:
-                TP += 1
-                matched_gold.add(best_idx)
-            else:
-                FP += 1
+        for i, e_emb in enumerate(emb_eval):
+            for j, g_emb in enumerate(emb_gold):
+                sim = cosine_similarity(e_emb, g_emb)
+                sim_matrix[i, j] = sim
+                comparison_records.append({
+                    "Image": image_id,
+                    "GPT_Triple": eval_triples[i],
+                    "CBM_Triple": gold_triples[j],
+                    "Similarity": sim,
+                })
 
-        FN += len(gold_triples) - len(matched_gold)
-        print(f"Image Summary: TP={TP}, FP={FP}, FN={FN}")
+        # Hungarian algorithm
+        cost_matrix = 1 - sim_matrix  # maximize similarity = minimize (1 - sim)
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
-    return TP, FP, FN
+        matched_gpt = set()
+        matched_cbm = set()
+
+        print("\n✓ Matched triples:")
+        for i, j in zip(row_ind, col_ind):
+            sim = sim_matrix[i, j]
+            if sim >= threshold:
+                print(f"GPT: {eval_triples[i]}\nCBM: {gold_triples[j]}\nSimilarity: {sim:.4f} ✅ MATCH\n")
+                matched_gpt.add(i)
+                matched_cbm.add(j)
+
+        unmatched_gpt = [eval_triples[i] for i in range(len(eval_triples)) if i not in matched_gpt]
+        unmatched_cbm = [gold_triples[j] for j in range(len(gold_triples)) if j not in matched_cbm]
+
+        if unmatched_gpt:
+            print("\n❌ Unmatched GPT triples:")
+            for triple in unmatched_gpt:
+                print(f"GPT: {triple}")
+
+        if unmatched_cbm:
+            print("\n❌ Unmatched CBM triples:")
+            for triple in unmatched_cbm:
+                print(f"CBM: {triple}")
+
+        TP += len(matched_gpt)
+        FP += len(eval_triples) - len(matched_gpt)
+        FN += len(gold_triples) - len(matched_cbm)
+
+        print(f"\nImage Summary: TP={len(matched_gpt)}, FP={len(eval_triples) - len(matched_gpt)}, FN={len(gold_triples) - len(matched_cbm)}")
+
+    return TP, FP, FN, comparison_records
 
 # === Threshold Evaluation ===
 
@@ -113,18 +135,34 @@ def evaluate_thresholds(gold_path, eval_path):
 
     thresholds = [0.70, 0.75, 0.80, 0.85, 0.90]
     results = []
+    all_records = []  # store for saving once
+
+    output_dir = "data/figures_output"
+    os.makedirs(output_dir, exist_ok=True)
 
     print("\n=== Evaluating BioBERT Full-Triple Similarity Thresholds ===")
     for threshold in thresholds:
         print(f"\n--- Threshold: {threshold:.2f} ---")
-        TP, FP, FN = compare_full_triples(gold_dict, eval_dict, threshold)
+        TP, FP, FN, records = compare_full_triples(gold_dict, eval_dict, threshold)
+
+        # store only once — first run will have the same records as others
+        if not all_records:
+            all_records = records
+
         precision = TP / (TP + FP) if (TP + FP) else 0
         recall = TP / (TP + FN) if (TP + FN) else 0
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
         results.append((threshold, precision, recall, f1))
+
         print(f"\nThreshold: {threshold:.2f} | Precision: {precision:.3f} | Recall: {recall:.3f} | F1: {f1:.3f}")
 
-    # Plot Results
+    # Save one Excel file with all similarity comparisons
+    pd.DataFrame(all_records).to_excel(
+        "data/prompt_engineering/statistical_data/Similarity_Threshold_Report.xlsx",
+        index=False
+    )
+
+    # Plot results
     thresholds, precisions, recalls, f1s = zip(*results)
     plt.figure(figsize=(7, 5), dpi=600)
     plt.plot(thresholds, f1s, marker='o', label='F1 Score', linewidth=2)
@@ -132,12 +170,12 @@ def evaluate_thresholds(gold_path, eval_path):
     plt.plot(thresholds, recalls, marker='^', linestyle='--', label='Recall')
     plt.xlabel("Semantic Similarity Threshold (Full Triple)", fontsize=12)
     plt.ylabel("Score", fontsize=12)
-    plt.title("Threshold vs. Precision / Recall / F1", fontsize=13)
+    #plt.title("Threshold vs. Precision / Recall / F1", fontsize=13)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.xticks(thresholds)
     plt.tight_layout()
-    plt.savefig("data/figures_output/Threshold_Evaluation_BioBERT_FullTriple.tiff", dpi=600)
+    plt.savefig(f"{output_dir}/Threshold_Evaluation.tiff", dpi=600)
     plt.close()
 
 # === CLI Interface ===

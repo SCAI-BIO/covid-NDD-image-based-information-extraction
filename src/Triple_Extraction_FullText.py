@@ -24,13 +24,13 @@ Input:
     - OpenAI API key (via CLI argument or environment variable).
 
 Output:
-    - Triples_From_Full_Text_CBM.csv: All extracted semantic triples.
-    - Triples_From_Full_Text_CBM.xlsx: Excel version of the same data.
+    - Triples_Full_Text_GPT_for_comp.csv: All extracted semantic triples.
+    - Triples_Full_Text_GPT_for_comp.xlsx: Excel version of the same data.
 
 Usage:
     python Triple_Extraction_FullText.py \
         --input data/CBM_data/full_text_articles.json \
-        --output_dir ./data/triples_output \
+        --output_dir ./data/gold_standard_comparison \
         --api_key sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXX
 """
 
@@ -156,7 +156,7 @@ def triples_extraction_from_articles(input_path, output_dir, API_key):
                 continue
 
     parsed_df = pd.DataFrame(parsed_data, columns=[
-        'Article ID', 'Title', 'Paragraph', 'Pathophysiological Process', 'Subject', 'Predicate', 'Object'])
+        'PMID', 'Title', 'Paragraph', 'Pathophysiological Process', 'Subject', 'Predicate', 'Object'])
 
     # Define the filtering condition
     def is_valid(row):
@@ -165,8 +165,8 @@ def triples_extraction_from_articles(input_path, output_dir, API_key):
     parsed_df = parsed_df[parsed_df.apply(is_valid, axis=1)].reset_index(drop=True)
 
     os.makedirs(output_dir, exist_ok=True)
-    csv_path = os.path.join(output_dir, "Triples_From_Full_Text_CBM.csv")
-    xlsx_path = os.path.join(output_dir, "Triples_From_Full_Text_CBM.xlsx")
+    csv_path = os.path.join(output_dir, "Triples_Full_Text_GPT_for_comp.csv")
+    xlsx_path = os.path.join(output_dir, "Triples_Full_Text_GPT_for_comp.xlsx")
 
     parsed_df.to_csv(csv_path, index=False)
     parsed_df.to_excel(xlsx_path, index=False)

@@ -1,0 +1,16 @@
+You are a biomedical expert. Categorize the following pathophysiological process into exactly one of the six predefined 
+mechanistic categories listed below. Respond only with the category name — do not explain your reasoning.
+
+Available categories:
+1. Viral Entry and Neuroinvasion
+2. Immune and Inflammatory Response
+3. Neurodegenerative Mechanisms
+4. Vascular Effects
+5. Psychological and Neurological Symptoms
+6. Systemic Cross-Organ Effects
+
+If the input does not clearly fit any category, return: Uncategorized
+
+Process: "{process_text}"
+
+Your answer:

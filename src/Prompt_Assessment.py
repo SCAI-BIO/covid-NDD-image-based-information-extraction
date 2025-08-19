@@ -1,15 +1,16 @@
 # Prompt_Assessment.py
 
 """
-Prompt Comparison using BioBERT Full-Triple Embedding Matching
+Prompt Comparison using BioBERT Full-Triple Embedding Matching (Hungarian Optimization)
 Authors: Elizaveta Popova, Negin Babaiha
 Institution: University of Bonn, Fraunhofer SCAI
-Date: 30/07/2025
+Date: 06/08/2025
 
 Description:
     Compares GPT triples from multiple prompts to a gold standard using BioBERT.
     Each triple (subject–predicate–object) is embedded as a normalized sentence and compared.
-    Prints matching logs, evaluates per prompt, saves statistics and visualizes results.
+    Uses Hungarian algorithm for optimal one-to-one alignment between GPT and gold triples.
+    Prints per-prompt metrics and generates precision / recall / F1 plots.
 
 Usage:
     python src/Prompt_Assessment.py
@@ -22,6 +23,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from transformers import AutoTokenizer, AutoModel
+from scipy.optimize import linear_sum_assignment
 
 # === Configuration ===
 GOLD_PATH = "data/prompt_engineering/cbm_files/CBM_subset_50_URL_triples.xlsx"
@@ -30,7 +32,7 @@ PROMPT_PATHS = {
     "Prompt 2": "data/prompt_engineering/gpt_files/GPT_subset_triples_prompt2_param0_0.xlsx",
     "Prompt 3": "data/prompt_engineering/gpt_files/GPT_subset_triples_prompt3_param0_0.xlsx"
 }
-SIM_THRESHOLD = 0.8
+SIM_THRESHOLD = 0.85
 
 # === Load BioBERT ===
 MODEL_NAME = "dmis-lab/biobert-base-cased-v1.1"
@@ -64,47 +66,38 @@ def group_full_triples(df):
             grouped.setdefault(row['Image_number'], []).append(triple)
     return grouped
 
-# === Core Comparison ===
-def compare_triples(gold_dict, eval_dict, threshold):
+# === Core Comparison with Hungarian Algorithm ===
+def compare_triples_hungarian(gold_dict, eval_dict, threshold):
     TP = FP = FN = 0
 
     for image_id in sorted(set(gold_dict) & set(eval_dict), key=lambda x: int(x.split('_')[-1])):
         gold_triples = gold_dict[image_id]
         eval_triples = eval_dict[image_id]
-        matched_gold = set()
 
-        print(f"\n--- Comparing triples for image: {image_id} ---")
+        if not gold_triples or not eval_triples:
+            FN += len(gold_triples)
+            FP += len(eval_triples)
+            continue
 
-        for idx_pred, pred in enumerate(eval_triples):
-            emb_pred = get_embedding(pred)
-            best_score = 0
-            best_idx = None
-            best_gold = ""
+        emb_gold = [get_embedding(t) for t in gold_triples]
+        emb_eval = [get_embedding(t) for t in eval_triples]
 
-            for idx_gold, gold in enumerate(gold_triples):
-                if idx_gold in matched_gold:
-                    continue
-                emb_gold = get_embedding(gold)
-                sim = cosine_similarity(emb_pred, emb_gold)
-                if sim > best_score:
-                    best_score = sim
-                    best_idx = idx_gold
-                    best_gold = gold
+        sim_matrix = np.zeros((len(eval_triples), len(gold_triples)))
+        for i, emb_pred in enumerate(emb_eval):
+            for j, emb_gold_j in enumerate(emb_gold):
+                sim_matrix[i, j] = cosine_similarity(emb_pred, emb_gold_j)
 
-            match = best_score >= threshold
-            print(f"\nTriple {idx_pred + 1}:")
-            print(f"GPT:  {pred}")
-            print(f"CBM:  {best_gold}")
-            print(f"Sim:  {best_score:.3f} → {'✅ MATCH' if match else '❌ NO MATCH'}")
+        cost_matrix = 1 - sim_matrix  # convert similarity to cost
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
-            if match:
-                TP += 1
-                matched_gold.add(best_idx)
-            else:
-                FP += 1
+        matched = 0
+        for i, j in zip(row_ind, col_ind):
+            if sim_matrix[i, j] >= threshold:
+                matched += 1
 
-        FN += len(gold_triples) - len(matched_gold)
-        print(f"Image Summary: TP={TP}, FP={FP}, FN={FN}")
+        TP += matched
+        FP += len(eval_triples) - matched
+        FN += len(gold_triples) - matched
 
     return TP, FP, FN
 
@@ -114,7 +107,7 @@ def evaluate_prompt(prompt_name, gold_df, eval_df, threshold):
     eval_dict = group_full_triples(eval_df)
 
     print(f"\n==================== {prompt_name} ====================")
-    TP, FP, FN = compare_triples(gold_dict, eval_dict, threshold)
+    TP, FP, FN = compare_triples_hungarian(gold_dict, eval_dict, threshold)
     precision = TP / (TP + FP) if (TP + FP) else 0
     recall = TP / (TP + FN) if (TP + FN) else 0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
@@ -149,15 +142,15 @@ if __name__ == "__main__":
     plt.xticks(x, df_stats["Prompt"], fontsize=10)
     plt.ylabel("Score", fontsize=11)
     plt.ylim(0, 1)
-    plt.title("Prompt Comparison via BioBERT Full Triple Matching (Threshold 0.8)", fontsize=12)
+    #plt.title("Prompt Comparison via BioBERT Triple Matching (Threshold 0.85)", fontsize=12)
     plt.legend()
     plt.grid(axis='y', linestyle='--', alpha=0.5)
 
     os.makedirs("data/figures_output", exist_ok=True)
     plt.tight_layout()
-    plt.savefig("data/figures_output/Prompt_Comparison_BioBERT_FullTriple.tiff", dpi=600)
+    plt.savefig("data/figures_output/Prompt_Comparison.tiff", dpi=600)
     plt.close()
 
     # === Save Evaluation Results ===
     os.makedirs("data/prompt_engineering/statistical_data", exist_ok=True)
-    df_stats.to_excel("data/prompt_engineering/statistical_data/Prompt_Comparison_BioBERT_FullTriple.xlsx", index=False)
+    df_stats.to_excel("data/prompt_engineering/statistical_data/Prompt_Comparison.xlsx", index=False)

@@ -1,0 +1,67 @@
+Prompt_1:
+
+Describe the image (Figure/Graphical abstract) from an article on comorbidity between COVID-19 and Neurodegeneration.   
+1. Name potential mechanisms (pathophysiological processes) of Covid-19's impact on the brain depicted in the image. 
+2. Describe each process depicted in the image as semantic triples (subject–predicate–object).  
+Example: 
+Pathophysiological Process: Astrocyte_Activation 
+Triples:
+SARS-CoV-2_infection|triggers|astrocyte_activation
+                                      
+Use ONLY the information shown in the image! Follow the structure precisely and don't write anything else! Replace spaces in names with _ sign, make sure that words "Pathophysiology Process:" and "Triples:" are presented, don't use bold font and margins. Each triple must contain ONLY THREE elements separated by a | sign, four and more are not allowed!
+
+
+
+
+Prompt_2:
+
+Describe the image (Figure/Graphical abstract) from an article on comorbidity between COVID-19 and Neurodegeneration.   
+1. Name potential mechanisms (pathophysiological processes) of Covid-19's impact on the brain depicted in the image. 
+2. Describe each process depicted in the image as semantic triples (subject–predicate–object).  
+Example: 
+Pathophysiological Process: Astrocyte_Activation 
+Triples:
+SARS-CoV-2_infection|triggers|astrocyte_activation
+                                      
+Use ONLY the information shown in the image! Follow the structure precisely and don't write anything else! Replace spaces in names with _ sign, make sure that words "Pathophysiological Process:" and "Triples:" are presented, don't use bold font and margins. Each triple must contain ONLY THREE elements separated by a | sign, four and more are not allowed! The predicate for each triple must be taken only from the Predicate List! 
+                                      
+Predicate List: increases, decreases, association, positive_correlation, negative_correlation, regulates, causes_no_change, directly_increases, is_a, directly_decreases, has_variant, biomarker_for, has_members, has_components, orthologous, equivalent_to, has_component, translated_to, prognostic_biomarker_for, has_member, transcribed_to, rate_limiting_step_of, analogous_to. 
+Structure your answer exactly as it is shown in the example. Don't write anything else!
+
+
+
+
+Prompt_3:
+
+Describe the image (Figure/Graphical abstract) from an article on comorbidity between COVID-19 and Neurodegeneration.   
+1. Name potential mechanisms (pathophysiological processes) of Covid-19's impact on the brain depicted in the image. 
+2. Describe each process depicted in the image as semantic triples (subject–predicate–object).  
+Example: 
+Pathophysiological Process: Astrocyte_Activation 
+Triples:
+SARS-CoV-2_infection|triggers|astrocyte_activation
+                                      
+Use ONLY the information shown in the image! Follow the structure precisely and don't write anything else! Replace spaces in names with _ sign, make sure that words "Pathophysiology Process:" and "Triples:" are presented, don't use bold font and margins. Each triple must contain ONLY THREE elements separated by a | sign, four and more are not allowed! The predicates should be chosen according to the provided example, and the objects should represent specific biological elements or conditions.
+Predicate examples: increases, decreases, causes, may_cause, leads_to, may_lead_to, affects, may_affect. 
+                                      
+Structure your answer exactly as it is shown in the example. Don't write anything else!
+
+
+
+
+Full-text triple extraction prompt:
+
+Describe the following scientific paragraph from an article on comorbidity between COVID-19 and Neurodegeneration.
+1. Name potential mechanisms (pathophysiological processes) of Covid-19's impact on the brain described in the text. 
+2. Describe each process described in the text as semantic triples (subject–predicate–object).  
+Example: 
+Pathophysiological Process: Astrocyte_Activation 
+Triples:
+SARS-CoV-2_infection|triggers|astrocyte_activation
+
+If the paragraph does not contain relevant biological content (e.g. acknowledgments, funding, conflicts of interest, publisher notes, metadata, disclaimers, or any non-scientific content), or if no such mechanisms or valid triples are present in the paragraph, return exactly:
+Pathophysiological Process: Not_found  
+Triples:  
+Not_found|Not_found|Not_found
+                                      
+Use ONLY the information provided in the text! Follow the structure precisely and don't write anything else! Replace spaces in names with _ sign, make sure that words "Pathophysiology Process:" and "Triples:" are presented, don't use bold font and margins. Each triple must contain ONLY THREE elements separated by a | sign, four and more are not allowed!

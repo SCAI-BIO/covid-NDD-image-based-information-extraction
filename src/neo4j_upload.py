@@ -32,7 +32,7 @@ Output:
     - Console logs indicating upload status and classification per triple
 
 Usage:
-    python src/neo4j_upload.py --cbm data/gold_standard_comparison/Triples_CBM_Gold_Standard_cleaned.csv --gpt data/gold_standard_comparison/Triples_GPT_for_comparison.csv
+    python src/neo4j_upload.py --cbm data/gold_standard_comparison/Triples_CBM_Gold_Standard_cleaned.csv --gpt data/gold_standard_comparison/Triples_GPT_for_comparison.csv --password YOUR_Neo4j_PASSWORD
 
 Requirements:
     - pandas
@@ -46,6 +46,7 @@ Requirements:
 from __future__ import annotations
 from operator import delitem
 import sys
+from pathlib import Path
 import pandas as pd
 import requests
 import argparse
@@ -1240,13 +1241,22 @@ def main():
     parser = argparse.ArgumentParser(description="Upload curated and GPT triples to Neo4j.")
     parser.add_argument("--cbm", required=True, help="Path to CBM gold standard CSV file")
     parser.add_argument("--gpt", required=True, help="Path to GPT-predicted triples CSV file")
+    parser.add_argument("--uri", default="bolt://localhost:7687", help="Neo4j Bolt URI (default: bolt://localhost:7687)")
+    parser.add_argument("--user", default="neo4j", help="Neo4j username (default: neo4j)")
+    parser.add_argument("--password", help="Neo4j password (if omitted, you will be prompted)")
     args = parser.parse_args()
 
-    cbm_fp = args.cbm
-    gpt_fp = args.gpt
+    cbm_fp = Path(args.cbm)
+    gpt_fp = Path(args.gpt)
 
-    cbm_df = load_and_tag(cbm_fp, "CBM")
-    gpt_df = load_and_tag(gpt_fp, "GPT")
+    if not cbm_fp.exists():
+        raise FileNotFoundError(f"--cbm not found: {cbm_fp.resolve()}")
+    if not gpt_fp.exists():
+        raise FileNotFoundError(f"--gpt not found: {gpt_fp.resolve()}")
+
+    # Load data
+    cbm_df = load_and_tag(str(cbm_fp), "CBM")
+    gpt_df = load_and_tag(str(gpt_fp), "GPT")
 
     all_df = pd.concat([cbm_df, gpt_df], ignore_index=True)
 
@@ -1260,11 +1270,12 @@ def main():
         .query("Subject != '' and Object != '' and Predicate != ''")
     )
 
-    neo4j_password = getpass("Enter Neo4j password: ")
+    # Password: CLI flag has priority; otherwise prompt
+    neo4j_password = args.password if args.password is not None else getpass("Enter Neo4j password: ")
 
     uploader = Neo4jUploader(
-        uri="bolt://localhost:7687",
-        user="neo4j",
+        uri=args.uri,
+        user=args.user,
         password=neo4j_password
     )
     try:

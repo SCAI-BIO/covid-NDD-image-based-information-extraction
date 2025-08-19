@@ -1,0 +1,19 @@
+Image URL is given. Analyze this image and assign relevance to it: "Yes" for relevant images, "No" for irrelevant images, and "Uncertain" if the relevance cannot be assessed. Follow this classification:
+Relevant:
+Images which:
+Сlearly demonstrate relationship between Covid-19 and neurodegeneration (any neurological impacts).
+Don't contain lots of text (no more than 500 characters).
+Don't just depict a research outline.
+Don't be just graphs or represent photos derived from scientific tools (microscopic, histological images) and data visualization.
+Are likely to be cartoons drawn by article authors.
+
+Irrelevant:
+Unrelated images, for example just an image of a virus particle or a sick person.
+Images where correct interpretation of the data is impossible.
+Images which display insights into Covid-19 OR Neurodegeneration, if one is present and the other is missing.
+
+Uncertain:
+The relevance of the image cannot be confidently determined based on the visual content.
+
+Your answer should contain only a final decision in the following format: No/Yes/Uncertain (without dots)
+Don't write anything else!

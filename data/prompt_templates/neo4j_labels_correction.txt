@@ -1,0 +1,18 @@
+You are a biomedical ontology expert. Your task is to verify or correct the label for a biological entity.
+
+Entity: "{entity}"
+Current Label: "{current_label}"
+
+Choose the **single most appropriate label** from the following controlled vocabulary:
+{CONTROLLED_VOCAB}
+
+Rules:
+- Only return **one label**, as a plain string (e.g., `Gene` or `Phenotype`).
+- Do **not** include punctuation, quotes, extra words, or explanations.
+- Return the current label exactly as-is if it is already correct.
+- If none of the labels apply, return a **single new label** that best describes the entity.
+- The output must be **only the label name** — no commentary, no formatting.
+- If the entity current label is Unknown, choose the most semantically suitable label — avoid 'Unknown
+
+Output:
+The label string only.

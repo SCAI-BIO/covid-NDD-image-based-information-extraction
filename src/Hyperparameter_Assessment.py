@@ -1,7 +1,6 @@
 # Hyperparameter_Assessment.py
-
 """
-Hyperparameter Tuning for GPT-Generated Triple Extraction (Full-Triple Matching)
+Hyperparameter Tuning for GPT-Generated Triple Extraction (Full-Triple Matching with Hungarian Algorithm)
 Authors: Elizaveta Popova, Negin Babaiha
 Institution: University of Bonn, Fraunhofer SCAI
 Date: 30/07/2025
@@ -21,6 +20,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+from scipy.optimize import linear_sum_assignment
 from transformers import AutoTokenizer, AutoModel
 
 # === File Paths ===
@@ -32,7 +32,7 @@ HYPERPARAM_PATHS = {
     "Temp=0.25, Top_p=0.25": "data/prompt_engineering/gpt_files/GPT_subset_triples_prompt1_param0_25.xlsx",
     "Temp=0.0, Top_p=0.0": "data/prompt_engineering/gpt_files/GPT_subset_triples_prompt1_param0_0.xlsx"
 }
-SIM_THRESHOLD = 0.8
+SIM_THRESHOLD = 0.85
 
 # === Load BioBERT ===
 MODEL_NAME = "dmis-lab/biobert-base-cased-v1.1"
@@ -72,41 +72,27 @@ def compare_triples(gold_dict, eval_dict, threshold):
 
     for image_id in sorted(set(gold_dict) & set(eval_dict), key=lambda x: int(x.split('_')[-1])):
         gold_triples = gold_dict[image_id]
-        eval_triples = eval_dict[image_id]
-        matched_gold = set()
+        pred_triples = eval_dict[image_id]
 
-        print(f"\n--- Comparing triples for image: {image_id} ---")
+        emb_gold = [get_embedding(t) for t in gold_triples]
+        emb_pred = [get_embedding(t) for t in pred_triples]
 
-        for idx_pred, pred in enumerate(eval_triples):
-            emb_pred = get_embedding(pred)
-            best_score = 0
-            best_idx = None
-            best_gold = ""
+        sim_matrix = np.zeros((len(pred_triples), len(gold_triples)))
+        for i in range(len(pred_triples)):
+            for j in range(len(gold_triples)):
+                sim_matrix[i][j] = cosine_similarity(emb_pred[i], emb_gold[j])
 
-            for idx_gold, gold in enumerate(gold_triples):
-                if idx_gold in matched_gold:
-                    continue
-                emb_gold = get_embedding(gold)
-                sim = cosine_similarity(emb_pred, emb_gold)
-                if sim > best_score:
-                    best_score = sim
-                    best_idx = idx_gold
-                    best_gold = gold
+        cost_matrix = 1 - sim_matrix
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
-            match = best_score >= threshold
-            print(f"\nTriple {idx_pred + 1}:")
-            print(f"GPT:  {pred}")
-            print(f"CBM:  {best_gold}")
-            print(f"Sim:  {best_score:.3f} → {'✅ MATCH' if match else '❌ NO MATCH'}")
+        matches = 0
+        for i, j in zip(row_ind, col_ind):
+            if sim_matrix[i][j] >= threshold:
+                matches += 1
 
-            if match:
-                TP += 1
-                matched_gold.add(best_idx)
-            else:
-                FP += 1
-
-        FN += len(gold_triples) - len(matched_gold)
-        print(f"Image Summary: TP={TP}, FP={FP}, FN={FN}")
+        TP += matches
+        FP += len(pred_triples) - matches
+        FN += len(gold_triples) - matches
 
     return TP, FP, FN
 
@@ -121,7 +107,6 @@ def evaluate_setting(setting_name, gold_df, eval_df, threshold):
     recall = TP / (TP + FN) if (TP + FN) else 0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
 
-    print(f"\n=== Summary for {setting_name} ===")
     print(f"TP: {TP}, FP: {FP}, FN: {FN}")
     print(f"Precision: {precision:.3f}, Recall: {recall:.3f}, F1 Score: {f1:.3f}")
 
@@ -140,7 +125,7 @@ if __name__ == "__main__":
     # Save stats
     df_stats = pd.DataFrame(results, columns=["Setting", "Precision", "Recall", "F1 Score", "TP", "FP", "FN"])
     os.makedirs("data/prompt_engineering/statistical_data", exist_ok=True)
-    df_stats.to_excel("data/prompt_engineering/statistical_data/Hyperparameter_Assessment_BioBERT_FullTriple.xlsx", index=False)
+    df_stats.to_excel("data/prompt_engineering/statistical_data/Hyperparameter_Assessment.xlsx", index=False)
 
     # Plot
     x = np.arange(len(df_stats))
@@ -154,12 +139,11 @@ if __name__ == "__main__":
     plt.xticks(x, df_stats["Setting"], rotation=30, ha='right')
     plt.ylabel("Score")
     plt.ylim(0, 1)
-    plt.title("Hyperparameter Comparison via BioBERT Full Triple Matching (Threshold 0.8)")
+    #plt.title("Hyperparameter Comparison via BioBERT Triple Matching (Threshold 0.85)")
     plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0)
     plt.grid(axis='y', linestyle='--', alpha=0.6)
     plt.tight_layout()
 
     os.makedirs("data/figures_output", exist_ok=True)
-    plt.tight_layout()
-    plt.savefig("data/figures_output/Hyperparameter_Comparison_BioBERT_FullTriple.tiff", dpi=600)
+    plt.savefig("data/figures_output/Hyperparameter_Assessment.tiff", dpi=600)
     plt.close()

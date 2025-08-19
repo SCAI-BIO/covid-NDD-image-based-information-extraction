@@ -1,4 +1,32 @@
-# Upload hypothesis space  in csv format to Neo4j AuraDB
+# neo4j_upload_fulltext.py
+
+"""
+Neo4j Upload of Biomedical Triples with Ontology-Based Labeling
+Authors: Negin Babaiha
+Institution: University of Bonn, Fraunhofer SCAI
+Date: 07/08/2025
+
+Description:
+    Loads semantic triples extracted from biomedical text into a Neo4j graph database.
+    Triples are processed to determine ontology-based labels and namespaces using external
+    APIs (e.g., HGNC, GO, MESH, HPO). The script assigns semantic types (e.g., Gene, Disease,
+    Phenotype) to each entity, cleans labels for Neo4j compatibility, and merges nodes and
+    relationships accordingly.
+
+    Supports robust input handling with CSV delimiter sniffing, optional metadata (e.g., PMID,
+    Title, Evidence), and customized metadata fields like Cell and Anatomy. Triple matching
+    and node creation follow a consistent and interpretable schema.
+
+Usage:
+    # Run with a custom input CSV
+    python src/neo4j_upload_fulltext.py \
+    --input data/gold_standard_comparison/Triples_Full_Text_GPT_for_comp_cleaned.csv \
+    --password YOUR_Neo4j_PASSWORD
+
+Note:
+    After this script run gpt4o-correct-neo4j-labels-nodes.py to correct labels!
+"""
+
 # After this RUN GPT-CORRECT .. script to correct labels!!
 from __future__ import annotations
 from operator import delitem
@@ -13,6 +41,8 @@ import re
 from difflib import get_close_matches
 import urllib
 import logging
+from pathlib import Path
+import argparse
 import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,7 +50,16 @@ import csv
 import re
 print("starting")
 def sanitize_label(label):
-    """Sanitize labels for Neo4j compatibility, only if necessary."""
+    """
+    Normalize and sanitize a label to ensure compatibility with Neo4j node naming rules (only if necessary).
+    Replaces spaces, hyphens, and dots with underscores.
+    
+    Args:
+        label (str): Raw entity label or predicate.
+    
+    Returns:
+        str: Cleaned and Neo4j-safe label.
+    """
     label_str = str(label).strip()
     # Check if the label contains only allowed characters (letters, digits, and underscores)
     if re.fullmatch(r'\w+', label_str):
@@ -30,6 +69,15 @@ def sanitize_label(label):
 
 
 def clean_entity_text(entity: str) -> str:
+    """
+    Lowercase and remove special characters from an entity name to standardize it.
+    
+    Args:
+        entity (str): Raw entity string.
+    
+    Returns:
+        str: Cleaned and normalized entity string.
+    """
     entity = entity.strip().lower()
     # Replace common separators with space or underscore
     entity = entity.replace("-", " ").replace("_", " ").replace("+", " plus ")
@@ -38,10 +86,19 @@ def clean_entity_text(entity: str) -> str:
     entity = re.sub(r"\s+", " ", entity)     # collapse multiple spaces
     return entity.strip()
 
-def determine_entity_type(entity):
+def determine_entity_label(entity):
     """
-    Pre-check the entity string for obvious entity types before making API calls.
-    Returns (is_likely_gene, suggested_label) tuple.
+    Determine the semantic type (e.g., Gene, Disease, Protein, etc.) and ontology source of a given entity.
+    Uses a combination of heuristics, keyword detection, and external ontology APIs (e.g., HGNC, MESH, GO).
+    
+    Args:
+        entity (str): A single biological entity name.
+    
+    Returns:
+        tuple: (label_type, namespace, ontology_id)
+            - label_type (str): Assigned semantic category (e.g., "Gene").
+            - namespace (str): Ontology source (e.g., "HGNC", "GO").
+            - ontology_id (str or None): Unique ontology identifier, if found.
     """
     entity = entity.strip().upper()
     
@@ -1174,6 +1231,14 @@ def determine_entity_label(entity):
 # Neo4j Uploader Class
 # ------------------------------------------------------------
 class Neo4jUploader:
+    """
+    Handles uploading of semantic triples into a Neo4j graph database using the official Neo4j driver.
+    
+    Methods:
+        upload_triples(triples): Uploads a DataFrame of triples into Neo4j.
+        close(): Closes the connection to the Neo4j driver.
+    """
+
     def __init__(self, uri, user, password):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
     
@@ -1256,11 +1321,17 @@ class Neo4jUploader:
 
 def load_and_tag(file_path: str, source_tag: str) -> pd.DataFrame:
     """
-    Detect delimiter (comma/semicolon/etc), load the CSV,
-    fill missing columns, set its source tag.
-    Ensures columns: Subject, Object, Predicate, URL,
-    Pathophysiological Process, source, Cell, Anatomy.
+    Load a CSV file containing semantic triples, infer delimiter, and tag rows with the source type.
+    Ensures required columns exist and fills missing metadata.
+    
+    Args:
+        file_path (str): Path to the CSV file.
+        source_tag (str): Label for the data source (e.g., "CBM", "GPT").
+    
+    Returns:
+        pd.DataFrame: Parsed and annotated dataframe of triples.
     """
+
     # sniff delimiter from a sample
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         sample = f.read(2048)
@@ -1305,38 +1376,42 @@ def load_and_tag(file_path: str, source_tag: str) -> pd.DataFrame:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main():
-    base   = os.path.dirname(os.path.abspath(__file__))
-    #cbm_fp = os.path.join(base, "Triples_CBM_Gold_Standard_cleaned.csv")
-    #gpt_fp = os.path.join(base, "Triples_GPT_for_comparison.csv")
-    fulltext_fp = os.path.join(base, "Triples_From_Full_Text_CBM_cleaned.csv")
+    parser = argparse.ArgumentParser(description="Upload full-text GPT triples to Neo4j.")
+    parser.add_argument(
+        "--input",
+        default="data/gold_standard_comparison/Triples_Full_Text_GPT_for_comp_cleaned.csv",
+        help="Path to full-text triples file (CSV or XLSX). "
+             "Defaults to data/gold_standard_comparison/Triples_Full_Text_GPT_for_comp_cleaned.csv"
+    )
+    parser.add_argument("--uri", default="bolt://localhost:7687", help="Neo4j Bolt URI (default: bolt://localhost:7687)")
+    parser.add_argument("--user", default="neo4j", help="Neo4j username (default: neo4j)")
+    parser.add_argument("--password", help="Neo4j password (if omitted, you will be prompted)")
+    args = parser.parse_args()
 
-    # Load and tag all three files
-    #cbm_df = load_and_tag(cbm_fp, "CBM")
-    #gpt_df = load_and_tag(gpt_fp, "GPT")
-    fulltext_df = load_and_tag(fulltext_fp, "GPT-fulltext")
+    # Validate input file
+    if not os.path.exists(args.input):
+        raise FileNotFoundError(f"--input not found: {os.path.abspath(args.input)}")
 
-    # Concatenate all three DataFrames
-    #all_df = pd.concat([cbm_df, gpt_df, fulltext_df], ignore_index=True)
-    all_df = pd.concat([fulltext_df], ignore_index=True)
-    # cols = [
-    #     "Subject", "Object", "Predicate", "URL", "PMID", "Title", "Evidence",
-    #     "Pathophysiological Process", "source", "Cell", "Anatomy"
-    # ]
-    optional_cols = [col for col in ["PMID", "Title", "Evidence"] if col in all_df.columns]
-    base_cols = ["Subject", "Object", "Predicate", "URL", "Pathophysiological Process", "source", "Cell", "Anatomy"]
-    cols = base_cols + optional_cols
+    # Load data
+    fulltext_df = load_and_tag(args.input, "GPT-fulltext")
 
+    # Keep only required + optional columns
+    base_cols = [
+        "Subject", "Object", "Predicate", "URL",
+        "Pathophysiological Process", "source", "Cell", "Anatomy"
+    ]
+    optional_cols = [c for c in ["PMID", "Title", "Evidence"] if c in fulltext_df.columns]
     triples = (
-        all_df[cols]
+        fulltext_df[base_cols + optional_cols]
         .dropna(subset=["Subject", "Object", "Predicate"])
         .query("Subject != '' and Object != '' and Predicate != ''")
     )
 
-    uploader = Neo4jUploader(
-        uri="bolt://localhost:7687",
-        user="neo4j",
-        password="12345678"  # <–– your password here
-    )
+    # Password: CLI flag has priority; otherwise prompt
+    neo4j_password = args.password if args.password is not None else getpass("Enter Neo4j password: ")
+
+    # Upload to Neo4j
+    uploader = Neo4jUploader(uri=args.uri, user=args.user, password=neo4j_password)
     try:
         uploader.upload_triples(triples)
         logger.info("All data uploaded successfully.")
@@ -1345,3 +1420,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python src/neo4j_upload_fulltext.py --input data/gold_standard_comparison/Triples_Full_Text_GPT_for_comp_cleaned.csv --password YOUR_Neo4j_PASSWORD
