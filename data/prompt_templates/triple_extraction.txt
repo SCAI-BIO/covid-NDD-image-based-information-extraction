@@ -26,6 +26,7 @@ SARS-CoV-2_infection|triggers|astrocyte_activation
 Use ONLY the information shown in the image! Follow the structure precisely and don't write anything else! Replace spaces in names with _ sign, make sure that words "Pathophysiological Process:" and "Triples:" are presented, don't use bold font and margins. Each triple must contain ONLY THREE elements separated by a | sign, four and more are not allowed! The predicate for each triple must be taken only from the Predicate List! 
                                       
 Predicate List: increases, decreases, association, positive_correlation, negative_correlation, regulates, causes_no_change, directly_increases, is_a, directly_decreases, has_variant, biomarker_for, has_members, has_components, orthologous, equivalent_to, has_component, translated_to, prognostic_biomarker_for, has_member, transcribed_to, rate_limiting_step_of, analogous_to. 
+
 Structure your answer exactly as it is shown in the example. Don't write anything else!
 
 

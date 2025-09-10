@@ -135,9 +135,9 @@ if __name__ == "__main__":
 
     # === Plot Results ===
     plt.figure(figsize=(8, 5), dpi=600)
-    plt.bar(x - width, df_stats["Precision"], width, label="Precision", color="#D95F02")
-    plt.bar(x, df_stats["Recall"], width, label="Recall", color="#1B9E77")
-    plt.bar(x + width, df_stats["F1 Score"], width, label="F1 Score", color="#7570B3")
+    plt.bar(x + width, df_stats["F1 Score"], width, label="F1 Score", color="#5c0b23")
+    plt.bar(x - width, df_stats["Precision"], width, label="Precision", color="#db7221")
+    plt.bar(x, df_stats["Recall"], width, label="Recall", color="#176e54")
 
     plt.xticks(x, df_stats["Prompt"], fontsize=10)
     plt.ylabel("Score", fontsize=11)
@@ -149,6 +149,7 @@ if __name__ == "__main__":
     os.makedirs("data/figures_output", exist_ok=True)
     plt.tight_layout()
     plt.savefig("data/figures_output/Prompt_Comparison.tiff", dpi=600)
+    plt.savefig("data/figures_output/Prompt_Comparison.png", dpi=600)
     plt.close()
 
     # === Save Evaluation Results ===

@@ -162,15 +162,28 @@ def evaluate_thresholds(gold_path, eval_path):
         index=False
     )
 
-    # Plot results
+    # Define custom colors (hex codes or named colors)
+    colors = {
+        "F1": "#5c0b23",        
+        "Precision": "#db7221", 
+        "Recall": "#176e54"     
+    }
+
+    # Plot results with custom colors and line styles
     thresholds, precisions, recalls, f1s = zip(*results)
     plt.figure(figsize=(7, 5), dpi=600)
-    plt.plot(thresholds, f1s, marker='o', label='F1 Score', linewidth=2)
-    plt.plot(thresholds, precisions, marker='s', linestyle='--', label='Precision')
-    plt.plot(thresholds, recalls, marker='^', linestyle='--', label='Recall')
+
+    plt.plot(thresholds, f1s, marker='o', label='F1 Score',
+            linewidth=2, color=colors["F1"], linestyle='-')   # solid line
+
+    plt.plot(thresholds, precisions, marker='s', label='Precision',
+            linewidth=2, color=colors["Precision"], linestyle='--')  # dashed
+
+    plt.plot(thresholds, recalls, marker='^', label='Recall',
+            linewidth=2, color=colors["Recall"], linestyle='-.')      # dotted
+
     plt.xlabel("Semantic Similarity Threshold (Full Triple)", fontsize=12)
     plt.ylabel("Score", fontsize=12)
-    #plt.title("Threshold vs. Precision / Recall / F1", fontsize=13)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.xticks(thresholds)

@@ -15,5 +15,5 @@ Images which display insights into Covid-19 OR Neurodegeneration, if one is pres
 Uncertain:
 The relevance of the image cannot be confidently determined based on the visual content.
 
-Your answer should contain only a final decision in the following format: No/Yes/Uncertain (without dots)
+Your answer should contain only a final decision in the following format: No/Yes/Uncertain (without dots).
 Don't write anything else!

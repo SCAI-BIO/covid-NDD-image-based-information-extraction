@@ -129,6 +129,10 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 │        └── gpt_files/                  ← GPT-extracted triple files for the same 50 URL subset
 │        └── statistical_data/           ← Statistical data and log files accompanying plots for prompt and hyperparameters assessment
 │   ├── MeSh_data/                       ← MeSH XML & category/synonym outputs
+│   ├── neo4j_queries/                   ← Files containing Neo4j queries used in this work for comparisons
+│   ├── bio_insights/                    ← Biological insights from the neo4j data
+│        └── neo4j_results/              ← Files containing results of the neo4j queries
+│        └── outputs/                    ← Figures and .csv files summarizing bioligical analysis
 │   ├── prompt_templates/                ← Files in .txt format containing prompts used in this work
 │   ├── URL_relevance_analysis/          ← URL relevance check results (GPT-4o and manual)
 │   └── triples_output/                  ← Extracted and categorized triples
@@ -148,12 +152,13 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 │   ├── GPT4o_uncategorized_handling.py
 │   ├── neo4j_upload.py
 │   ├── neo4j_upload_fulltext.py
-│   └── review_labels_neo4j.py
+│   ├── review_labels_neo4j.py
+│   └── bio_insights.py
 ```
 
 ---
 
-## Outputs
+## Important Files and Descriptions
 
 | File | Description |
 |------|-------------|
@@ -197,8 +202,10 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 | `Final_Relevant_URLs.xlsx` | The final list of the relevant URLs |
 | `Relevance_assignment_GPT_4o.xlsx` | The full URL list with relevance labels assigned by GPT-4o |
 | `URL_relevance_final_manual_check.xlsx` | Manual relevance assessment of the URLs considered relevant by GPT-4o |
+| **bio_insights** |
+| `bio_insights_with_neo4j_queries.docx` | Biological findings, figures and neo4j queries used |
 | **data** |
-| `Supplementary_material_S3_Table.xlsx` | Results from GPT prompt & hyperparameter tuning |
+| `Supplementary_material_S4_Table.xlsx` | Results from GPT prompt & hyperparameter tuning |
 | `neo4j.dump` | The final graph to be open in neo4j |
 
 ---
@@ -282,6 +289,17 @@ python src/neo4j_upload_fulltext.py \
 
 # Step 15 (Optional): Review and correct Neo4j node labels using GPT
 python src/review_labels_neo4j.py
+
+# Step 16: Get the biological insights from the neo4j data 
+python python src/bio_insights.py \
+        --input-dir data/bio_insights/neo4j_results \
+        --output-dir data/bio_insights/outputs \
+        --top-n 20 \
+        --run-neo4j \
+        --neo4j-uri neo4j://127.0.0.1:7687 \
+        --neo4j-user neo4j \
+        --neo4j-password YOUR_PASSWORD \
+        --neo4j-db neo4j
 ```
 
 ---
@@ -358,6 +376,12 @@ export OPENAI_API_KEY=sk-...
 
 ---
 
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
 ## Contact
 
 - **Elizaveta Popova**  
@@ -367,6 +391,12 @@ export OPENAI_API_KEY=sk-...
 - **Negin Sadat Babaiha**  
   Fraunhofer SCAI  
   negin.babaiha@scai.fraunhofer.de  
+
+---
+
+## Funding
+
+This research was supported by the Bonn-Aachen International Center for Information Technology (b-it) foundation, Bonn, Germany, and Fraunhofer Institute for Algorithms and Scientific Computing (SCAI). Additional financial support was provided through the COMMUTE project, which receives funding from the European Union under Grant Agreement No. 101136957. 
 
 ---
 

@@ -132,9 +132,10 @@ if __name__ == "__main__":
     width = 0.25
 
     plt.figure(figsize=(8, 5), dpi=600)
-    plt.bar(x - width, df_stats["Precision"], width, label="Precision", color="#E69F00")
-    plt.bar(x, df_stats["Recall"], width, label="Recall", color="#56B4E9")
-    plt.bar(x + width, df_stats["F1 Score"], width, label="F1 Score", color="#009E73")
+
+    plt.bar(x + width, df_stats["F1 Score"], width, label="F1 Score", color="#5c0b23")
+    plt.bar(x - width, df_stats["Precision"], width, label="Precision", color="#db7221")
+    plt.bar(x, df_stats["Recall"], width, label="Recall", color="#176e54")
 
     plt.xticks(x, df_stats["Setting"], rotation=30, ha='right')
     plt.ylabel("Score")
@@ -146,4 +147,5 @@ if __name__ == "__main__":
 
     os.makedirs("data/figures_output", exist_ok=True)
     plt.savefig("data/figures_output/Hyperparameter_Assessment.tiff", dpi=600)
+    plt.savefig("data/figures_output/Hyperparameter_Assessment.png", dpi=600)
     plt.close()

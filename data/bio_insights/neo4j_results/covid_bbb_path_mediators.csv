@@ -1,0 +1,6 @@
+mediator,labels,edges_on_paths,cbm_edges_on_paths,gpt_edges_on_paths
+NEUROINFLAMMATION,[Biological_Process],4,3,0
+CYTOKINES,[Protein],2,1,1
+CYTOKINE_STORM,[Biological_Process],2,0,2
+HYPOTENSION,[Phenotype],2,1,1
+MACROPHAGE,[Cell],2,1,1
