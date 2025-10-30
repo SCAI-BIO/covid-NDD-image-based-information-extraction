@@ -176,7 +176,8 @@ def gpt_extract(client: OpenAI, url: str) -> str:
         ],
         max_tokens=2000,
         temperature=0.25,
-        top_p=0.25
+        top_p=0.25,
+        seed=42
     )
     return response.choices[0].message.content or ""
 
