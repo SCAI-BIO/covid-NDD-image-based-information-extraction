@@ -223,11 +223,7 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 - Heuristically infers relations (*increases*, *decreases*, *interacts_with*) from textual cues.  
 - Outputs structured triples to `rule_based_triples.csv` for benchmarking against GPT-extracted results.  
 
-**Usage Example:**
-```bash
-python src/Rule_Based_Diagram_Parser.py
 
----
 ## How to Run (Pipeline)
 
 ```bash
