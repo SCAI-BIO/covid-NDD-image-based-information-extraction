@@ -154,6 +154,7 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 │   ├── neo4j_upload_fulltext.py
 │   ├── review_labels_neo4j.py
 │   └── bio_insights.py
+│   ├── image_baseline.py
 ```
 
 ---
@@ -209,7 +210,24 @@ SCAI-BIO/covid-NDD-image-based-information-extraction/
 | `neo4j.dump` | The final graph to be open in neo4j |
 
 ---
+### **Rule-Based Diagram Parser (Baseline)**
 
+| File | Description |
+|------|-------------|
+| `src/image_baseline.py` | Implements a **robust, rule-based baseline** for extracting simple semantic triples from diagram images without using language models. It detects arrow-like contours and nearby text labels using **OpenCV** and **Tesseract OCR**, then infers subject–predicate–object triples based on spatial relationships. The script hardens OCR filtering, fixes index alignment issues, and outputs extracted triples into a CSV file for downstream comparison or evaluation. |
+
+**Key Features:**
+- Detects and parses diagrams using only computer vision + OCR (no LLMs).  
+- Resolves “single positional indexer is out-of-bounds” errors with safer indexing.  
+- Uses configurable thresholds for contour area and OCR confidence.  
+- Heuristically infers relations (*increases*, *decreases*, *interacts_with*) from textual cues.  
+- Outputs structured triples to `rule_based_triples.csv` for benchmarking against GPT-extracted results.  
+
+**Usage Example:**
+```bash
+python src/Rule_Based_Diagram_Parser.py
+
+---
 ## How to Run (Pipeline)
 
 ```bash
